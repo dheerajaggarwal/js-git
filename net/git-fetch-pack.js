@@ -187,7 +187,7 @@ function fetchPack(transport, onError) {
 
 }
 
-var defer = require('js-git/lib/defer');
+var defer = require('../lib/defer');
 function throwIt(err) {
   defer(function () {
     throw err;
