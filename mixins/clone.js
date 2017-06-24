@@ -14,7 +14,7 @@ module.exports = mixin;
 function mixin(repo) {
   repo.clone = clone;
 
-  function onRefs(repo, api, refs, options){
+  function onRefs(api, refs, options){
     if (options.onRefs) {
       options.onRefs(refs);
     }
@@ -49,10 +49,10 @@ function mixin(repo) {
     return wants;
   }
 
-  function onChannels(repo, channels, wants, refs, options, callback){
+  function onChannels(channels, wants, refs, options, callback){
     var unpack = function(err, hashes){
       if(err) return callback(err);
-      return onUnpack(repo, hashes, wants, refs, callback);
+      return onUnpack(hashes, wants, refs, callback);
     };
     if (options.onProgress) {
       if (typeof options.onProgress !== "function") {
@@ -66,37 +66,38 @@ function mixin(repo) {
     }
   }
 
-  function onUnpack(repo, hashes, wants, refs, callback){
-    return updateRef(repo, 0, wants, refs, callback);
+  function onUnpack(hashes, wants, refs, callback){
+    return updateRef(0, wants, refs, callback);
   }
 
-  function updateRef(repo, index, wants, refs, callback){
+  function updateRef(index, wants, refs, callback){
     if(index === wants.length) return callback(null, refs);
     var name = wants[index];
     if (name === "HEAD" || !refs[name]) {
       index++;
-      return updateRef(repo, index, wants, refs, callback);
+      return updateRef(index, wants, refs, callback);
     } else {
       repo.updateRef(name, refs[name], function(err, hash){
         if(err) return callback(err);
         index++;
-        return updateRef(repo, index, wants, refs, callback);
+        return updateRef(index, wants, refs, callback);
       });  
     }
   }
 
-  function clone(repo, transport, options, callback) {
+  function clone(transport, options, callback) {
+    console.log(transport);
     // Start a fetch-pack request over the transport
     var api = fetchPackProtocol(transport);
 
     // Get the refs on the remote
     api.take(function(err, refs){
       if(err) return callback(err);
-      var wants = onRefs(repo, api, refs, options);
+      var wants = onRefs(api, refs, options);
 
       api.take(function(err, channels){
         if(err) return callback(err);
-        return onChannels(repo, channels, wants, refs, options, callback);
+        return onChannels(channels, wants, refs, options, callback);
       });
     });
   }
