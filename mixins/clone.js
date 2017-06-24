@@ -86,7 +86,6 @@ function mixin(repo) {
   }
 
   function clone(transport, options, callback) {
-    console.log(transport);
     // Start a fetch-pack request over the transport
     var api = fetchPackProtocol(transport);
 
