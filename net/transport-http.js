@@ -36,7 +36,7 @@ module.exports = function (request) {
       request("GET", gitUrl + "/info/refs?service=" + serviceName, headers, onResponse);
 
       // Prep for later requests
-      var bodyParts = [];
+      var bodyParts = [], packStarted = false;
       var bodyWrite = pktLine.framer(function (chunk) {
         bodyParts.push(chunk);
       });
@@ -80,9 +80,17 @@ module.exports = function (request) {
       }
 
       function onWrite(item) {
-        if (item === undefined) return socket.put();
-        bodyWrite(item);
+        if (item === undefined){
+          return socket.put();
+        } else if(item === "PACK"){
+          packStarted = true;
+        } else if(packStarted){ //directly push the pack items in bodyParts
+          bodyParts.push(item);
+        } else if(item !== "done\n" || (item === "done\n" && serviceName === "git-upload-pack")){
+          bodyWrite(item); //otherwise pktLine the item
+        }
         socket.take(onWrite);
+        
         if (item !== "done\n" || !bodyParts.length) return;
         var body = bodec.join(bodyParts);
         bodyParts.length = 0;

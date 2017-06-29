@@ -13,6 +13,7 @@ module.exports = mixin;
 
 function mixin(repo) {
   repo.clone = clone;
+  repo.pull = clone;
 
   function onRefs(api, refs, options){
     if (options.onRefs) {
